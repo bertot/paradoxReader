@@ -3,7 +3,7 @@ package com.khubla.pdxreader.px;
 import com.google.common.io.LittleEndianDataInputStream;
 import com.khubla.pdxreader.api.PDXReaderException;
 import com.khubla.pdxreader.db.BlockSize;
-import com.khubla.pdxreader.db.TableType;
+import com.khubla.pdxreader.db.FileType;
 
 /**
  * @author tom
@@ -16,7 +16,7 @@ public class PXFileHeader {
    /**
     * table type
     */
-   private TableType tableType;
+   private FileType fileType;
    /**
     * length of the header block (bytes)
     */
@@ -85,8 +85,8 @@ public class PXFileHeader {
       return numberRecords;
    }
 
-   public TableType getTableType() {
-      return tableType;
+   public FileType getFileType() {
+      return fileType;
    }
 
    public int getTotalBlocksInFile() {
@@ -109,48 +109,19 @@ public class PXFileHeader {
          /*
           * type of file
           */
-         final int tableType = littleEndianDataInputStream.readUnsignedByte();
-         if (0 == tableType) {
-            this.tableType = TableType.indexedDB;
-         } else if (1 == tableType) {
-            this.tableType = TableType.indexPX;
-         } else if (2 == tableType) {
-            this.tableType = TableType.nonindexedDB;
-         } else if (3 == tableType) {
-            this.tableType = TableType.noincrementingsecondaryindexXnn;
-         } else if (4 == tableType) {
-            this.tableType = TableType.secondaryindexYnn;
-         } else if (5 == tableType) {
-            this.tableType = TableType.incrementingsecondaryindexXnn;
-         } else if (6 == tableType) {
-            this.tableType = TableType.nonincrementingsecondaryindexXGn;
-         } else if (7 == tableType) {
-            this.tableType = TableType.secondaryindexYGn;
-         } else if (8 == tableType) {
-            this.tableType = TableType.incrementingsecondaryindexXGn;
-         } else {
-            throw new Exception("Unknown table type '" + tableType + "'");
+         final int fileTypeAsByte = littleEndianDataInputStream.readUnsignedByte();
+         this.fileType = FileType.getFromIntValue(fileTypeAsByte);
+         if(null == fileType) {
+            throw new PDXReaderException("Unknown file type '" + fileTypeAsByte + "'");
          }
+
          /*
           * size of a data block
           */
          dataBlockSizeCode = littleEndianDataInputStream.readUnsignedByte();
-         if (1 == dataBlockSizeCode) {
-            blockSize = BlockSize.oneK;
-         } else if (2 == dataBlockSizeCode) {
-            blockSize = BlockSize.twoK;
-         } else if (3 == dataBlockSizeCode) {
-            blockSize = BlockSize.threeK;
-         } else if (4 == dataBlockSizeCode) {
-            blockSize = BlockSize.fourK;
-         } else if (8 == dataBlockSizeCode) {
-            blockSize = BlockSize.eightK;
-         } else if (16 == dataBlockSizeCode) {
-            blockSize = BlockSize.sixteenK;
-         } else if (32 == dataBlockSizeCode) {
-            blockSize = BlockSize.thirtytwoK;
-         } else {
-            throw new Exception("Unknown block size code '" + dataBlockSizeCode + "'");
+         this.blockSize = BlockSize.getFromIntValue(dataBlockSizeCode);
+         if(null == blockSize) {
+            throw new PDXReaderException("Unknown block size code '" + dataBlockSizeCode + "'");
          }
          /*
           * total records in file
@@ -224,8 +195,8 @@ public class PXFileHeader {
       this.numberRecords = numberRecords;
    }
 
-   public void setTableType(TableType tableType) {
-      this.tableType = tableType;
+   public void setFileType(FileType fileType) {
+      this.fileType = fileType;
    }
 
    public void setTotalBlocksInFile(int totalBlocksInFile) {

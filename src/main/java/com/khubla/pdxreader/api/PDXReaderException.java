@@ -10,4 +10,8 @@ public class PDXReaderException extends Exception {
    public PDXReaderException(String message, Exception e) {
       super(message, e);
    }
+
+    public PDXReaderException(Exception e) {
+        super(e);
+    }
 }

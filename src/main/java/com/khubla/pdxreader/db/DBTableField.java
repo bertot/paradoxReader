@@ -4,217 +4,171 @@ import com.google.common.io.LittleEndianDataInputStream;
 import com.khubla.pdxreader.api.PDXReaderException;
 import com.khubla.pdxreader.util.StringUtil;
 
+import java.io.IOException;
+
 /**
  * @author tom
  */
 public class DBTableField {
-   /**
-    * field type
-    */
-   public static enum FieldType {
-      /**
-       * <pre>
-       * A - Alpha, length 255
-       * D - Date, length 4
-       * S - Short Integer, length 2
-       * I - Long Integer, length 4
-       * C - Currency, length 8
-       * N - Number, length 8
-       * L - Logical, length 1
-       * M - Memo, variable length
-       * B - Binary, variable length
-       * E - Formatting memo, variable length
-       * O - OLE, variable length
-       * G - Graphic Blob, variable length
-       * T - Time, length 4
-       * TS - TimeStamp, length 8
-       * Auto - AutoIncrement
-       * BCD - BCD, length 17
-       * Bytes - Bytes, variable length
-       * </pre>
-       */
-      A(1), D(2), S(3), I(4), C(5), N(6), L(9), M(0x0c), B(0x0d), E(0x0e), O(0x0f), G(0x10), T(0x14), TS(0x15), Auto(0x16), BCD(0x17), Bytes(0x18);
-      private int value;
+    /**
+     * field type
+     */
+    public enum FieldType {
+        /**
+         * <pre>
+         * ALPHA - Alpha, length 255
+         * DATE - Date, length 4
+         * SHORT_INT - Short Integer, length 2
+         * LONG_INT - Long Integer, length 4
+         * CURRENCY - Currency, length 8
+         * NUMBER - Number, length 8
+         * LOGICAL - Logical, length 1
+         * MEMO - Memo, variable length
+         * BINARY - Binary, variable length
+         * FORMATTING_MEMO - Formatting memo, variable length
+         * OLE - OLE, variable length
+         * GRAPHIC - Graphic Blob, variable length
+         * TIME - Time, length 4
+         * TIMESTAMP - TimeStamp, length 8
+         * AUTO_INCREMENT - AutoIncrement
+         * BCD - BCD, length 17
+         * Bytes - Bytes, variable length
+         * </pre>
+         */
+        ALPHA(0x01),
+        DATE(0x02, 4),
+        SHORT_INT(0x03, 2),
+        LONG_INT(0x04, 4),
+        CURRENCY(0x05, 8),
+        NUMBER(0x06, 8),
+        LOGICAL(0x09, 1),
+        MEMO(0x0c),
+        BINARY(0x0d),
+        FORMATTING_MEMO(0x0e),
+        OLE(0x0f),
+        GRAPHIC(0x10),
+        TIME(0x14, 4),
+        TIMESTAMP(0x15, 8),
+        AUTO_INCREMENT(0x16),
+        BCD(0x17, 17),
+        Bytes(0x18);
+        // private int fileType;
 
-      private FieldType(int value) {
-         this.value = value;
-      }
+        private int headerType;
+        private int fixedLength;
 
-      public int getValue() {
-         return value;
-      }
+        FieldType(int type) {
+            this.headerType = type;
+            this.fixedLength = -1;
+        }
 
-      public void setValue(int value) {
-         this.value = value;
-      }
-   };
+        FieldType(int type, int len) {
+            this.headerType = type;
+            this.fixedLength = len;
+        }
 
-   /**
-    * field type
-    */
-   private FieldType fieldType;
-   /**
-    * field type
-    */
-   private int type;
-   /**
-    * field length
-    */
-   private int length;
-   /**
-    * name
-    */
-   private String name;
-   /**
-    * unknown bytes
-    */
-   private byte[] unknownFieldBytes;
+        public int getHeaderType() {
+            return headerType;
+        }
 
-   public FieldType getFieldType() {
-      return fieldType;
-   }
+        public boolean validateLength(int length) {
+            return (fixedLength < 0 || length == fixedLength);
+        }
 
-   public int getLength() {
-      return length;
-   }
+        public static FieldType getFromType(int type) {
+            for (FieldType ft : FieldType.values()) {
+                if (ft.getHeaderType() == type) {
+                    return ft;
+                }
+            }
+            return null;
+        }
+    }
 
-   public String getName() {
-      return name;
-   }
+    /**
+     * field type
+     */
+    private FieldType fieldType;
 
-   public int getType() {
-      return type;
-   }
+    /**
+     * field length
+     */
+    private int length;
+    /**
+     * name
+     */
+    private String name;
+    /**
+     * fdc (from pxlib)
+     */
+    private int fdc = 0;
 
-   public byte[] getUnknownFieldBytes() {
-      return unknownFieldBytes;
-   }
+    /**
+     * unknown bytes
+     */
+    private byte[] unknownFieldBytes;
+    FieldType getFieldType() {
+        return fieldType;
+    }
 
-   /**
-    * names
-    */
-   public void readFieldName(LittleEndianDataInputStream littleEndianDataInputStream) throws PDXReaderException {
-      try {
-         name = StringUtil.readString(littleEndianDataInputStream);
-      } catch (final Exception e) {
-         throw new PDXReaderException("Exception in read", e);
-      }
-   }
+    int getLength() {
+        return length;
+    }
 
-   /**
-    * types and sizes, 2 bytes per field
-    */
-   public boolean readFieldTypeAndSize(LittleEndianDataInputStream littleEndianDataInputStream) throws PDXReaderException {
-      try {
-         type = littleEndianDataInputStream.readUnsignedByte();
-         length = littleEndianDataInputStream.readUnsignedByte();
-         switch (type) {
-            case 0x00:
-               return false;
-            case 0x01:
-               fieldType = FieldType.A;
-               break;
-            case 0x02:
-               fieldType = FieldType.D;
-               if (length != 4) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0x03:
-               fieldType = FieldType.S;
-               if (length != 2) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0x04:
-               fieldType = FieldType.I;
-               if (length != 4) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0x05:
-               fieldType = FieldType.C;
-               if (length != 8) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0x06:
-               fieldType = FieldType.N;
-               if (length != 8) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0x09:
-               fieldType = FieldType.L;
-               if (length != 1) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0xc:
-               fieldType = FieldType.M;
-               break;
-            case 0xd:
-               fieldType = FieldType.B;
-               break;
-            case 0xe:
-               fieldType = FieldType.E;
-               break;
-            case 0xf:
-               fieldType = FieldType.O;
-               break;
-            case 0x10:
-               fieldType = FieldType.G;
-               break;
-            case 0x14:
-               fieldType = FieldType.T;
-               if (length != 4) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0x15:
-               fieldType = FieldType.TS;
-               if (length != 8) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0x16:
-               fieldType = FieldType.Auto;
-               break;
-            case 0x17:
-               fieldType = FieldType.BCD;
-               if (length != 17) {
-                  throw new Exception("Invalid field length '" + length + "' for type '" + type + "'");
-               }
-               break;
-            case 0x18:
-               fieldType = FieldType.Bytes;
-               break;
-            default:
-               throw new PDXReaderException("Unknown field type '" + type + "'");
-         }
-         return true;
-      } catch (final Exception e) {
-         throw new PDXReaderException("Exception in readFieldTypeAndSize", e);
-      }
-   }
+    public String getName() {
+        return name;
+    }
 
-   public void setFieldType(FieldType fieldType) {
-      this.fieldType = fieldType;
-   }
+    public byte[] getUnknownFieldBytes() {
+        return unknownFieldBytes;
+    }
 
-   public void setLength(int length) {
-      this.length = length;
-   }
+    /**
+     * names
+     */
+    void readFieldName(LittleEndianDataInputStream littleEndianDataInputStream) throws PDXReaderException {
+        try {
+            name = StringUtil.readString(littleEndianDataInputStream);
+        } catch (final Exception e) {
+            throw new PDXReaderException("Exception in read", e);
+        }
+    }
 
-   public void setName(String name) {
-      this.name = name;
-   }
+    /**
+     * types and sizes, 2 bytes per field
+     */
+    boolean readFieldTypeAndSize(LittleEndianDataInputStream littleEndianDataInputStream) throws PDXReaderException {
+        try {
+            int type = littleEndianDataInputStream.readUnsignedByte();
+            length = littleEndianDataInputStream.readUnsignedByte();
 
-   public void setType(int type) {
-      this.type = type;
-   }
+            if (type == 0x00) {
+                return false;
+            }
 
-   public void setUnknownFieldBytes(byte[] unknownFieldBytes) {
-      this.unknownFieldBytes = unknownFieldBytes;
-   }
+            fieldType = FieldType.getFromType(type);
+
+            if (null == fieldType) {
+                throw new PDXReaderException("Unknown field type '" + type + "'");
+            }
+
+            // BCD Fields have a fixed length of 17 ... information from stream is stored in "fdc" attribute instead
+            if(FieldType.BCD.equals(fieldType)) {
+                this.fdc = length;
+                this.length = 17;
+            }
+
+            if (!fieldType.validateLength(length)) {
+                throw new PDXReaderException("Invalid field length '" + length + "' for type '" + type + "'(" + fieldType + ") - expected: '" + fieldType.fixedLength + "'");
+            }
+
+            return true;
+        } catch (IOException e) {
+            throw new PDXReaderException("error reading type/length from stream", e);
+        }
+    }
+
+    public void setUnknownFieldBytes(byte[] unknownFieldBytes) {
+        this.unknownFieldBytes = unknownFieldBytes;
+    }
 }

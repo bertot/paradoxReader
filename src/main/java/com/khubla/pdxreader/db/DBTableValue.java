@@ -46,53 +46,53 @@ public class DBTableValue {
              */
             final FieldType fieldType = pdxTableField.getFieldType();
             switch (fieldType) {
-               case A:
+               case ALPHA:
                   value = StringUtil.readString(data);
                   break;
-               case D:
+               case DATE:
                   // date
                   final long d = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getShort();
                   value = Long.toString(d);
                   break;
-               case S:
+               case SHORT_INT:
                   final long s = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getShort();
                   value = Long.toString(s);
                   break;
-               case I:
+               case LONG_INT:
                   data[0] = (byte) (data[0] & 0x7f); // handle unsigned integers
                   final long i = ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN).getInt();
                   value = Long.toString(i);
                   break;
-               case C:
+               case CURRENCY:
                   // currency
                   final double dollars = ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN).getDouble();
                   value = Double.toString(dollars);
                   break;
-               case M:
+               case MEMO:
                   // Memo
                   value = StringUtil.byteArrayToString(data);
                   break;
-               case N:
+               case NUMBER:
                   final long n = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getLong();
                   value = Double.toString(n);
                   break;
-               case L:
+               case LOGICAL:
                   // Logical
                   value = StringUtil.byteArrayToString(data);
                   break;
-               case B:
+               case BINARY:
                   // Binary
                   value = StringUtil.byteArrayToString(data);
                   break;
-               case O:
+               case OLE:
                   // OLE
                   value = StringUtil.byteArrayToString(data);
                   break;
-               case E:
+               case FORMATTING_MEMO:
                   // formatted memo
                   value = StringUtil.byteArrayToString(data);
                   break;
-               case G:
+               case GRAPHIC:
                   // Graphic
                   value = StringUtil.byteArrayToString(data);
                   break;
@@ -104,10 +104,10 @@ public class DBTableValue {
                   // Bytes
                   value = StringUtil.byteArrayToString(data);
                   break;
-               case TS:
+               case TIMESTAMP:
                   value = ParadoxTime.getTimeFromParadoxTime(data);
                   break;
-               case Auto:
+               case AUTO_INCREMENT:
                   final short auto = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getShort();
                   value = Short.toString(auto);
                   break;

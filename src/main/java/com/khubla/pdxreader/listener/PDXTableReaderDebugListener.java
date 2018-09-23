@@ -21,8 +21,8 @@ public class PDXTableReaderDebugListener implements PDXTableListener {
        */
       System.out.println("recordBufferSize: " + pdxTableHeader.getRecordBufferSize());
       System.out.println("headerBlockSize: " + pdxTableHeader.getHeaderBlockSize());
-      System.out.println("tableType: " + pdxTableHeader.getTableType());
-      System.out.println("dataBlockSizeCode: " + pdxTableHeader.getDataBlockSizeCode());
+      System.out.println("fileType: " + pdxTableHeader.getFileType());
+      System.out.println("dataBlockSizeCode: " + pdxTableHeader.getMaxTableSize());
       System.out.println("numberRecords: " + pdxTableHeader.getNumberRecords());
       System.out.println("blocksInUse: " + pdxTableHeader.getBlocksInUse());
       System.out.println("totalBlocksInFile: " + pdxTableHeader.getTotalBlocksInFile());
@@ -47,19 +47,19 @@ public class PDXTableReaderDebugListener implements PDXTableListener {
       System.out.println("indexUpdateRequired: " + pdxTableHeader.getIndexUpdateRequired());
       System.out.println("refIntegrity: " + pdxTableHeader.getRefIntegrity());
       System.out.println("embeddedFilename: " + pdxTableHeader.getEmbeddedFilename());
-      System.out.println("unk1: " + pdxTableHeader.getUnk1());
-      System.out.println("unk2: " + pdxTableHeader.getUnk2());
-      System.out.println("unk3: " + pdxTableHeader.getUnk3());
-      System.out.println("unk4: " + pdxTableHeader.getUnk4());
-      System.out.println("unk5: " + pdxTableHeader.getUnk5());
-      System.out.println("unk6: " + pdxTableHeader.getUnk6());
-      System.out.println("unk7: " + pdxTableHeader.getUnk7());
-      System.out.println("unk8: " + pdxTableHeader.getUnk8());
-      System.out.println("unk9: " + pdxTableHeader.getUnk9());
-      System.out.println("unk10: " + pdxTableHeader.getUnk10());
-      System.out.println("unk11: " + pdxTableHeader.getUnk11());
-      System.out.println("unk12: " + pdxTableHeader.getUnk12());
-      System.out.println("unk13: " + pdxTableHeader.getUnk13());
+      System.out.println("realHeaderSize: "+ pdxTableHeader.getRealHeaderSize());
+      if(null != pdxTableHeader.getDbDataHeader()) {
+          System.out.println("CodePage: "+ pdxTableHeader.getDbDataHeader().getDosCodePage());
+          System.out.println("FileUpdateTime: "+ pdxTableHeader.getDbDataHeader().getFileUpdateTime());
+      }
+      System.out.println("unk5: " + pdxTableHeader.getUnknown0x12x13());
+      System.out.println("unk6: " + pdxTableHeader.getUnknownPtr0x1A());
+      System.out.println("unk7: " + pdxTableHeader.getUnknown0x2bx2c());
+      System.out.println("unk8: " + pdxTableHeader.getUnknown0x2f());
+      System.out.println("unk9: " + pdxTableHeader.getUnknown0x3c());
+      System.out.println("unk10: " + pdxTableHeader.getUnknown0x3ex3f());
+      System.out.println("unk11: " + pdxTableHeader.getUnknown0x48());
+      System.out.println("unk13: " + pdxTableHeader.getUnknown0x50f());
    }
 
    @Override
