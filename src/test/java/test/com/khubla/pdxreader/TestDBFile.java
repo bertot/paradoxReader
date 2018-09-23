@@ -26,7 +26,7 @@ public class TestDBFile {
          }
       } catch (final Exception e) {
          e.printStackTrace();
-         Assert.fail();
+         Assert.fail(e.getMessage());
       }
    }
 }
